@@ -126,6 +126,80 @@ SSH access is controlled through Tailscale SSH policy
 Backup access is limited to required services only
 Result
 
+
+
+
+newer version----
+
+
+# 📁 `setup/tailscale.md`
+
+```md
+# Tailscale Setup
+
+## Install Tailscale
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+Authenticate
+sudo tailscale up
+
+Follow the login link.
+
+Verify Connectivity
+tailscale ip
+ping <other-node>
+Enable MagicDNS
+Enable in Tailscale admin console
+Allows hostname-based communication
+Tailscale SSH
+
+Enable SSH:
+
+sudo tailscale set --ssh
+
+Test:
+
+ssh user@parents
+Tags
+
+Create:
+
+tag:admin
+tag:parents-backup
+tag:inlaws-backup
+
+Assign tags in admin console.
+
+Access Control (ACL)
+
+Example:
+
+{
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:admin"],
+      "dst": ["*:*"]
+    },
+    {
+      "action": "accept",
+      "src": ["tag:parents-backup"],
+      "dst": ["tag:admin:*"]
+    },
+    {
+      "action": "accept",
+      "src": ["tag:inlaws-backup"],
+      "dst": ["tag:admin:*"]
+    }
+  ]
+}
+Result
+Secure communication between all nodes
+Controlled access using tags
+SSH without manual key setup
+
+
 Tailscale successfully connects isolated simulated locations and provides a secure foundation for the backup system.
 
 This creates a practical pattern for a real-world deployment where each VM could be replaced by a physical server or NAS at a remote location.
