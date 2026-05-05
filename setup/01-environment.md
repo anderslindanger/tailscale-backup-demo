@@ -2,135 +2,140 @@
 
 ## Overview
 
-This lab uses Proxmox VE to simulate a **multi-site backup architecture** within a single host.
+This lab uses Proxmox VE to simulate a **multi-site backup environment** on a single host.
 
-Instead of relying on network-level isolation, this design uses Tailscale to enforce **secure, logical separation between environments**, while keeping all systems on a shared network for simplicity and internet access.
+Each virtual machine represents a separate physical location (Admin, Parents, In-laws).
+Although all systems run on the same underlying network, **they are treated as independent sites**.
 
-### Goals
-
-- Simulate multiple remote locations
-- Provide local backup capability at each site
-- Enable secure off-site replication
-- Demonstrate a real-world, reproducible architecture
+All inter-system communication is handled through Tailscale, not the local network.
 
 ---
 
-## Network Design
+## Goals
 
-All virtual machines are connected to a single Proxmox bridge:
-
-| Bridge | Purpose |
-|--------|--------|
-| vmbr0  | Shared network with internet access |
-
-Although all systems share the same underlying network, **they do not communicate over the LAN**.
-
-### Key Design Principle
-
-All inter-system communication occurs over the **Tailscale tailnet**.
-
-- Uses Tailscale IPs or MagicDNS
-- Traffic is encrypted end-to-end
-- Access is controlled via ACLs and tags
-
-This simulates separate physical locations without requiring VLANs or multiple bridges.
+* Simulate multiple remote sites within a single Proxmox host
+* Provide local backup servers per site
+* Prepare systems for secure communication via Tailscale
+* Keep the environment simple, reproducible, and realistic
 
 ---
 
-## Virtual Machines
+## Host Requirements
 
-| VM | Role | Function |
-|----|------|----------|
-| **adminserver** | Central Node | Receives replicated backups |
-| **parents** | Backup Server | Local backups + replication |
-| **inlaws** | Backup Server | Local backups + replication |
+* Proxmox VE installed
+* Internet access
+* Minimum **1 TB of available storage** (required for backup simulation)
 
-### Responsibilities
+### Recommended Resources
 
-Each backup server:
-1. Stores local backups for fast restore  
-2. Replicates backup data to `adminserver` over Tailscale  
+* CPU: 4+ cores
+* RAM: 8–16 GB
 
 ---
 
-## Architecture Purpose
+## Virtual Machine Specifications
 
-This lab demonstrates a **Tailscale-first architecture**.
+Create the following virtual machines:
 
-### Logical Isolation
+| VM Name     | Role          | Disk    | Description                                  |
+| ----------- | ------------- | ------- | -------------------------------------------- |
+| adminserver | Central Node  | 200 GB  | Receives off-site replicated backups         |
+| parents     | Backup Server | 500 GB+ | Stores local backups and replicates off-site |
+| inlaws      | Backup Server | 100 GB+ | Stores local backups and replicates off-site |
 
-- Nodes communicate only over Tailscale
-- No reliance on local subnet routing
-- Fully portable to real-world deployments
-
-### Local Backup (Primary)
-
-- Devices back up to a local server
-- Enables fast recovery
-
-### Off-Site Replication (Secondary)
-
-- Backup data is replicated to `adminserver`
-- Protects against:
-  - Hardware failure
-  - Site loss
-
-### Centralized Management
-
-`adminserver` acts as:
-- Backup aggregation point
-- Recovery location
-- Administrative control node
+> Storage sizing is intentional to simulate real-world backup constraints and behavior.
 
 ---
 
-## Deployment Process
+## Network Configuration
 
-1. Create Proxmox VMs using `vmbr0`
-2. Install Ubuntu Server on each VM
-3. Apply system updates
-4. Install required packages
-5. Install and authenticate Tailscale on all nodes
-6. Verify connectivity over the tailnet
-7. Confirm all inter-node traffic uses Tailscale
+All VMs are connected to:
 
----
+| Bridge | Purpose                                     |
+| ------ | ------------------------------------------- |
+| vmbr0  | Default network with DHCP + internet access |
 
-## Result
+### Key Notes
 
-The final environment successfully demonstrates:
+* IP addresses are assigned via **local DHCP**
+* No static IP configuration is required
+* No VLANs or network isolation are used
 
-- Multi-site backup architecture
-- Secure communication via Tailscale
-- Local + off-site backup strategy
+Although the machines share a network, this does **not affect the lab outcome**.
 
-### Key Advantages
-
-- No VLAN or complex networking required
-- Fully reproducible on a single host
-- Scales easily to real-world environments
+All meaningful communication occurs over the Tailscale tailnet, making this setup functionally identical to geographically distributed systems.
 
 ---
 
-## Design Decision: Why Not VLANs or Multiple Bridges?
+## VM Setup Steps
 
-Traditional lab setups simulate multiple sites using VLANs or separate network bridges.
+Repeat the following steps for each VM:
 
-This project intentionally avoids that approach.
+### 1. Create Virtual Machine
 
-### Reasons
+* OS: Ubuntu Server (22.04 LTS or newer)
+* CPU: 1–2 cores
+* RAM: 2–4 GB
+* Disk: Based on table above
 
-- Reduces complexity
-- Keeps setup simple and reproducible
-- Focuses on Tailscale as the networking layer
+### 2. Install Ubuntu Server
 
-### Outcome
+During installation:
 
-Tailscale becomes the **primary control plane**, providing:
-- Secure connectivity
-- Access control
-- Cross-network communication
+* Enable **OpenSSH Server**
+* Use DHCP (default network settings)
+* Set a hostname matching the VM name:
 
-This mirrors how modern distributed environments are increasingly designed.
+  * `adminserver`
+  * `parents`
+  * `inlaws`
+
+### 3. Update System
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
 
 ---
+
+## Validation
+
+Before continuing, verify:
+
+* All VMs have internet access
+* SSH access works from your host machine
+* Each VM is reachable via its assigned DHCP IP
+
+Example:
+
+```bash
+ssh user@<vm-ip>
+```
+
+---
+
+## Design Principle
+
+This lab intentionally avoids traditional network complexity.
+
+* No VLANs
+* No firewall rules
+* No port forwarding
+
+Instead, networking is abstracted entirely through Tailscale.
+
+This ensures:
+
+* Consistent behavior regardless of physical location
+* Secure, encrypted communication between all nodes
+* A clean and reproducible lab environment
+
+---
+
+## Next Step
+
+Continue to:
+
+➡️ `02-tailscale.md`
+
+This is where secure connectivity, access control, and node identity are configured.
