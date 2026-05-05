@@ -418,6 +418,6 @@ This policy allows the project to simulate a realistic multi-site backup system 
 
 Continue to:
 
-➡️ `05-parents-backup-setup.md`
+➡️ `04-parents-backup.md`
 
 The next document configures the parents backup server for local backups and off-site replication.
