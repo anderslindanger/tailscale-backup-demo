@@ -299,6 +299,6 @@ This makes the environment portable and realistic. The same configuration works 
 
 Continue to:
 
-➡️ `05-tailscale-acl.md`
+➡️ `03-acls.md`
 
 The next document defines the groups, tag ownership, grants, and SSH rules that control access between devices.
