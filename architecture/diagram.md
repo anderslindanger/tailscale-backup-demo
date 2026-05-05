@@ -1,8 +1,3 @@
-# Architecture Diagram
-
-## Tailscale Secure Backup Architecture
-
-```mermaid
 flowchart TB
     subgraph Admin["Admin / Home Network"]
         AdminMac["Admin MacBook<br/>Admin Device<br/>tag:admin"]
@@ -13,24 +8,26 @@ flowchart TB
     subgraph Parents["Parents Network"]
         ParentClient["Parent MacBook<br/>Time Machine Client<br/>tag:parents-client"]
         ParentsBackup["parents<br/>Local Time Machine Backup Server<br/>tag:parents-backup"]
-        ParentStorage["Local Backup Disk<br/>/mnt/backups"]
+        ParentStorage["Local Backup Storage<br/>/backup/timemachine<br/>/backup/manual"]
     end
 
     subgraph Inlaws["In-laws Network"]
         InlawsClient["In-laws MacBook / Client<br/>Time Machine Client<br/>tag:inlaws-client"]
         InlawsBackup["inlaws<br/>Local Time Machine Backup Server<br/>tag:inlaws-backup"]
-        InlawsStorage["Local Backup Disk<br/>/mnt/backups"]
+        InlawsStorage["Local Backup Storage<br/>/backup/timemachine<br/>/backup/manual"]
     end
 
     Tailnet["Tailscale Tailnet<br/>Private Encrypted Mesh Network"]
 
     AdminMac --> Tailnet
     AdminServer --> Tailnet
+    ParentClient --> Tailnet
     ParentsBackup --> Tailnet
+    InlawsClient --> Tailnet
     InlawsBackup --> Tailnet
 
-    ParentClient -- "Local SMB / Time Machine<br/>TCP 445<br/>LAN only" --> ParentsBackup
-    InlawsClient -- "Local SMB / Time Machine<br/>TCP 445<br/>LAN only" --> InlawsBackup
+    ParentClient -- "SMB / Time Machine<br/>TCP 445 over Tailnet" --> ParentsBackup
+    InlawsClient -- "SMB / Time Machine<br/>TCP 445 over Tailnet" --> InlawsBackup
 
     ParentsBackup --> ParentStorage
     InlawsBackup --> InlawsStorage
