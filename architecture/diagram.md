@@ -1,23 +1,24 @@
+```mermaid
 flowchart TB
     subgraph Admin["Admin / Home Network"]
-        AdminMac["Admin MacBook<br/>Admin Device<br/>tag:admin"]
-        AdminServer["adminserver<br/>Off-site Backup Target<br/>Central Admin Server<br/>tag:admin"]
-        AdminStorage["Off-site Backup Storage<br/>/backups/parents<br/>/backups/inlaws"]
+        AdminMac["Admin MacBook\nAdmin Device\ntag:admin"]
+        AdminServer["adminserver\nOff-site Backup Target\nCentral Admin Server\ntag:admin"]
+        AdminStorage["Off-site Backup Storage\n/backups/parents\n/backups/inlaws"]
     end
 
     subgraph Parents["Parents Network"]
-        ParentClient["Parent MacBook<br/>Time Machine Client<br/>tag:parents-client"]
-        ParentsBackup["parents<br/>Local Time Machine Backup Server<br/>tag:parents-backup"]
-        ParentStorage["Local Backup Storage<br/>/backup/timemachine<br/>/backup/manual"]
+        ParentClient["Parent MacBook\nTime Machine Client\ntag:parents-client"]
+        ParentsBackup["parents\nLocal Time Machine Backup Server\ntag:parents-backup"]
+        ParentStorage["Local Backup Storage\n/backup/timemachine\n/backup/manual"]
     end
 
     subgraph Inlaws["In-laws Network"]
-        InlawsClient["In-laws MacBook / Client<br/>Time Machine Client<br/>tag:inlaws-client"]
-        InlawsBackup["inlaws<br/>Local Time Machine Backup Server<br/>tag:inlaws-backup"]
-        InlawsStorage["Local Backup Storage<br/>/backup/timemachine<br/>/backup/manual"]
+        InlawsClient["In-laws MacBook / Client\nTime Machine Client\ntag:inlaws-client"]
+        InlawsBackup["inlaws\nLocal Time Machine Backup Server\ntag:inlaws-backup"]
+        InlawsStorage["Local Backup Storage\n/backup/timemachine\n/backup/manual"]
     end
 
-    Tailnet["Tailscale Tailnet<br/>Private Encrypted Mesh Network"]
+    Tailnet["Tailscale Tailnet\nPrivate Encrypted Mesh Network"]
 
     AdminMac --> Tailnet
     AdminServer --> Tailnet
@@ -26,21 +27,22 @@ flowchart TB
     InlawsClient --> Tailnet
     InlawsBackup --> Tailnet
 
-    ParentClient -- "SMB / Time Machine<br/>TCP 445 over Tailnet" --> ParentsBackup
-    InlawsClient -- "SMB / Time Machine<br/>TCP 445 over Tailnet" --> InlawsBackup
+    ParentClient -- "SMB / Time Machine\nTCP 445 over Tailnet" --> ParentsBackup
+    InlawsClient -- "SMB / Time Machine\nTCP 445 over Tailnet" --> InlawsBackup
 
     ParentsBackup --> ParentStorage
     InlawsBackup --> InlawsStorage
     AdminServer --> AdminStorage
 
-    ParentsBackup -- "Off-site Replication<br/>SSH + rsync over Tailnet" --> AdminServer
-    InlawsBackup -- "Off-site Replication<br/>SSH + rsync over Tailnet" --> AdminServer
+    ParentsBackup -- "Off-site Replication\nSSH + rsync over Tailnet" --> AdminServer
+    InlawsBackup -- "Off-site Replication\nSSH + rsync over Tailnet" --> AdminServer
 
-    AdminMac -- "Admin Access<br/>Tailscale SSH" --> AdminServer
-    AdminMac -- "Admin Access<br/>Tailscale SSH" --> ParentsBackup
-    AdminMac -- "Admin Access<br/>Tailscale SSH" --> InlawsBackup
+    AdminMac -- "Admin Access\nTailscale SSH" --> AdminServer
+    AdminMac -- "Admin Access\nTailscale SSH" --> ParentsBackup
+    AdminMac -- "Admin Access\nTailscale SSH" --> InlawsBackup
 
-    ParentClient -. "No direct access<br/>Blocked by ACL" .-> AdminServer
-    ParentClient -. "No access<br/>Blocked by ACL" .-> InlawsBackup
-    InlawsClient -. "No access<br/>Blocked by ACL" .-> ParentsBackup
-    InlawsClient -. "No direct access<br/>Blocked by ACL" .-> AdminServer
+    ParentClient -. "No direct access\nBlocked by ACL" .-> AdminServer
+    ParentClient -. "No access\nBlocked by ACL" .-> InlawsBackup
+    InlawsClient -. "No access\nBlocked by ACL" .-> ParentsBackup
+    InlawsClient -. "No direct access\nBlocked by ACL" .-> AdminServer
+```
