@@ -2,89 +2,132 @@
 
 ## Overview
 
-This project demonstrates a secure, real-world backup architecture using Tailscale to connect multiple remote environments without requiring VPNs, port forwarding, or complex firewall configurations.
+This project demonstrates a **secure, multi-site backup architecture** built using Tailscale.
+
+It connects multiple remote environments into a single private network **without requiring VPNs, port forwarding, or complex firewall configurations**.
 
 Each location maintains its own local backups while securely replicating data to a centralized off-site server for disaster recovery.
 
 ---
 
-## Problem
+## The Problem
 
-Managing backups across multiple remote locations typically requires:
+Managing backups across multiple locations is typically complex and fragile.
 
-- VPN configuration
-- Public IP addresses
-- Firewall rules
-- Complex networking
+Traditional approaches require:
 
-This project eliminates those requirements by using Tailscale as a private network layer.
+* VPN configuration
+* Public IP addresses
+* Port forwarding
+* Firewall rules
+* SSH key management
+
+This introduces:
+
+* Security risks
+* Operational overhead
+* Difficult troubleshooting
 
 ---
 
-## Solution
+## The Solution
 
-- Each site has a **local backup server**
-- Clients back up locally (fast, reliable restores)
-- Backup servers replicate data **securely over the Tailnet**
-- A central **admin server** stores off-site copies
+This project replaces traditional networking with **identity-based connectivity**.
+
+* Each site has a **local backup server**
+* Clients back up locally for fast recovery
+* Backup servers replicate data securely over the **Tailscale tailnet**
+* A central **admin server** stores off-site copies
+
+No services are exposed to the public internet.
 
 ---
 
 ## Key Features
 
-- 🔒 Secure private networking (Tailscale)
-- 🚫 No port forwarding or firewall changes
-- 💾 Local + off-site backup strategy
-- 🔑 Tailscale SSH (no key management)
-- 🧠 Simple, scalable architecture
+* 🔒 Secure private networking using Tailscale
+* 🚫 No port forwarding or firewall changes
+* 💾 Local + off-site backup strategy
+* 🔑 Tailscale SSH (no SSH key management required)
+* 🧠 Simple, scalable, and reproducible design
 
 ---
 
 ## Architecture
 
-See:
-- `architecture/overview.md`
-- `architecture/diagram.md`
+* `architecture/overview.md`
+* `architecture/diagram.md`
+
+This architecture demonstrates:
+
+* Decentralized backups with centralized protection
+* Identity-based access control using tags and ACLs
+* Secure communication across isolated environments
 
 ---
 
 ## Setup Guide
 
-Follow in order:
+Follow the setup in order:
 
-1. `setup/environment.md`
-2. `setup/tailscale.md`
-3. `setup/parents-backup.md`
-4. `setup/inlaws-backup.md`
+1. `setup/01-environment.md`
+2. `setup/02-tailscale.md`
+3. `setup/03-acls.md`
+4. `setup/04-parents-backup-and-replication.md`
+5. `setup/05-inlaws-backup-and-replication.md`
+
+Each step builds toward a fully working multi-site backup system.
 
 ---
 
 ## Demo
 
-See:
-- `demo/demo-script.md`
+* `demo/06-demo-script.md`
+
+This demonstrates:
+
+* Secure connectivity between nodes
+* Identity-based access control
+* Real backup + replication workflow
 
 ---
 
-## How It Works (Quick Summary)
+## How It Works
 
-1. Macs back up to their **local server**
-2. Backup servers store data locally
-3. Backup servers replicate data to **adminserver** using `rsync` over Tailscale
-4. Adminserver acts as the **off-site backup destination**
+```text id="3m9u4q"
+Mac → Local Backup Server → Admin Server
+```
+
+1. Macs back up to their **local server** using Time Machine (SMB)
+2. Backup servers store data locally in `/backup/...`
+3. Backup servers replicate data to `adminserver` using `rsync` over Tailscale
+4. `adminserver` stores off-site copies in `/backups/...`
 
 ---
 
 ## Technologies Used
 
-- Tailscale
-- Ubuntu Server
-- Proxmox (lab environment)
-- rsync
-- cron
+* Tailscale
+* Ubuntu Server
+* Proxmox (lab environment)
+* rsync
+* cron
+* Samba (Time Machine support)
 
 ---
 
 ## Outcome
 
-A secure, low-maintenance backup system that works across multiple locations without traditional networking complexity.
+This project delivers a **secure, low-maintenance, and production-ready backup architecture** that:
+
+* Works across multiple locations
+* Requires no traditional network configuration
+* Enforces least-privilege access
+* Scales easily to real-world environments
+
+---
+
+## Key Takeaway
+
+> **Secure networking doesn’t need to be complex.**
+> With Tailscale, identity replaces infrastructure.
