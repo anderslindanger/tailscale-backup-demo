@@ -1,14 +1,24 @@
 #!/bin/bash
 
+# Creates a test file and replicates it to adminserver using rsync over Tailscale.
+# Update ADMIN_SERVER and SITE before running.
+
+set -e
+
 # ===== CONFIG =====
-SITE="parents"   # change to "inlaws" when needed
-DEST="backupuser@ADMIN_SERVER:/backups/${SITE}/manual/"
+SITE="parents"              # change to "inlaws" when needed
+ADMIN_SERVER="adminserver"  # change if using Tailscale IP or different hostname
+
+DEST="backupuser@${ADMIN_SERVER}:/backups/${SITE}/manual/"
 SOURCE="/backup/manual/"
 LOGFILE="/backup/logs/test-rsync.log"
 
-# ===== CREATE TEST FILE =====
+# ===== PREP =====
 mkdir -p "$SOURCE"
-echo "test $(date)" > "${SOURCE}test.txt"
+mkdir -p /backup/logs
+
+# ===== CREATE TEST FILE =====
+echo "test backup $(date)" > "${SOURCE}test.txt"
 
 # ===== RUN TEST =====
 echo "==== Test rsync started at $(date) ====" >> "$LOGFILE"
@@ -18,5 +28,7 @@ rsync -az --delete "$SOURCE" "$DEST" >> "$LOGFILE" 2>&1
 echo "==== Test rsync finished at $(date) ====" >> "$LOGFILE"
 
 # ===== VERIFY =====
-echo "Test complete. Verify on adminserver:"
+echo
+echo "Test complete."
+echo "Verify on adminserver:"
 echo "cat /backups/${SITE}/manual/test.txt"
