@@ -2,204 +2,303 @@
 
 ## Overview
 
-Tailscale is used to connect the simulated remote locations without requiring port forwarding, public IP addresses, or traditional VPN firewall rules.
+This document covers installing Tailscale on the lab servers, joining them to the tailnet, enabling Tailscale SSH, and manually applying device tags in the Tailscale Admin Console.
 
-In this lab, Proxmox is used to simulate separate physical networks. Tailscale provides the secure private network layer that allows the systems to communicate even though the underlying networks are isolated.
+The ACL and access-control policy are configured in the next document.
 
-## Goals
+---
 
-The Tailscale setup is designed to demonstrate:
+## Environment
 
-- Secure connectivity between isolated environments
-- Device identity using Tailscale nodes
-- Role-based access using tags
-- Admin access using Tailscale SSH
-- Service access over the tailnet, specifically SMB for Time Machine backups
-- No public exposure of backup services
+This setup uses the following nodes:
 
-## Nodes
+| Device             | Type             | Purpose                           | Tag                  |
+| ------------------ | ---------------- | --------------------------------- | -------------------- |
+| `adminserver`      | Ubuntu Server VM | Central backup replication target | `tag:admin`          |
+| `parents`          | Ubuntu Server VM | Parents local backup server       | `tag:parents-backup` |
+| `inlaws`           | Ubuntu Server VM | In-laws local backup server       | `tag:inlaws-backup`  |
+| `Morgan's MacBook` | macOS client     | Test end-user backup client       | `tag:parents-client` |
 
-The following nodes were enrolled into the tailnet:
+The servers are joined using reusable Tailscale auth keys.
+End-user MacBooks are invited into the tailnet and sign in normally using an identity provider such as Google or Microsoft.
 
-| Node | Role | Tag |
-|---|---|---|
-| adminserver | Central admin and replication target | tag:admin |
-| parents | Parents local backup server | tag:parents-backup |
-| inlaws | In-laws local backup server | tag:inlaws-backup |
-| morgans-macbook-air | Parent client device | tag:parents-client |
-| anderss-macbook-pro | Admin client device | tag:admin |
+---
 
-## Install Tailscale
+## Why Tailscale Is Used
 
-Run the following command on each Ubuntu Server node:
+The VMs are on the same Proxmox network for lab simplicity, but the backup architecture is designed as if each system is in a separate physical location.
 
-```bash
-curl -fsSL https://tailscale.com/install.sh | sh
+Tailscale makes the experience the same whether the systems are:
 
-This installs the Tailscale client and required services.
+* On the same LAN
+* In different homes
+* Behind NAT
+* On different ISPs
+* In different cities
 
-Bring Each Node Online
+For this project, Tailscale provides:
 
-After installation, start Tailscale and authenticate the node:
+* Encrypted private connectivity
+* Device identity
+* Simple SSH access
+* Access control through tags and ACLs
+* No port forwarding or public exposure
 
-sudo tailscale up --ssh
+---
 
-The --ssh option enables Tailscale SSH, which allows SSH access to be controlled by Tailscale ACLs instead of relying only on traditional network-based SSH access.
+## Step 1 — Connect to Each Server Over Local SSH
 
-Authentication
-
-Each node was authenticated into the tailnet using the admin account.
-
-For a more reproducible deployment, an auth key could also be used:
-
-sudo tailscale up --auth-key tskey-auth-REPLACE-ME --hostname parents --ssh
-
-For this demo, interactive login was used first so that the setup could be validated manually before adding automation.
-
-Node Naming
-
-Nodes were renamed in the Tailscale admin console for clarity:
-
-adminserver
-parents
-inlaws
-morgans-macbook-air
-anderss-macbook-pro
-
-Clear naming is important because the demo uses these names when explaining the architecture and validating access.
-
-Tags
-
-The following tags were applied:
-
-Tag	Purpose
-tag:admin	Admin systems and admin client devices
-tag:parents-backup	Parents local backup server
-tag:inlaws-backup	In-laws local backup server
-tag:parents-client	Parent client devices
-tag:inlaws-client	In-law client devices
-Why Tags Are Used
-
-Tags allow access to be based on device role instead of individual IP addresses.
-
-This makes the design easier to scale. For example:
-
-Additional parent laptops can be tagged as tag:parents-client
-Additional parent backup servers can be tagged as tag:parents-backup
-Admin systems can be tagged as tag:admin
-
-The ACL policy can remain mostly unchanged as the environment grows.
-
-Verify Node Connectivity
-
-Check the Tailscale status from any node:
-
-tailscale status
-
-Example validation tests:
-
-ping parents
-ping inlaws
-ping adminserver
-
-If MagicDNS is enabled, node names can be used instead of Tailscale IP addresses.
-
-Validate Tailscale SSH
-
-From the admin MacBook:
-
-ssh alindanger@parents
-
-Expected result:
-
-Admin user can SSH into tagged infrastructure nodes
-Non-admin users cannot SSH into infrastructure nodes unless explicitly allowed
-Security Design
-
-This project does not expose SMB, SSH, or backup services to the public internet.
-
-Instead:
-
-Devices authenticate to the tailnet
-ACLs define allowed traffic
-SSH access is controlled through Tailscale SSH policy
-Backup access is limited to required services only
-Result
-
-
-
-
-newer version----
-
-
-# 📁 `setup/tailscale.md`
-
-```md
-# Tailscale Setup
-
-## Install Tailscale
-
-```bash
-curl -fsSL https://tailscale.com/install.sh | sh
-Authenticate
-sudo tailscale up
-
-Follow the login link.
-
-Verify Connectivity
-tailscale ip
-ping <other-node>
-Enable MagicDNS
-Enable in Tailscale admin console
-Allows hostname-based communication
-Tailscale SSH
-
-Enable SSH:
-
-sudo tailscale set --ssh
-
-Test:
-
-ssh user@parents
-Tags
-
-Create:
-
-tag:admin
-tag:parents-backup
-tag:inlaws-backup
-
-Assign tags in admin console.
-
-Access Control (ACL)
+Before Tailscale is installed, connect to each VM using its local DHCP address.
 
 Example:
 
-{
-  "acls": [
-    {
-      "action": "accept",
-      "src": ["tag:admin"],
-      "dst": ["*:*"]
-    },
-    {
-      "action": "accept",
-      "src": ["tag:parents-backup"],
-      "dst": ["tag:admin:*"]
-    },
-    {
-      "action": "accept",
-      "src": ["tag:inlaws-backup"],
-      "dst": ["tag:admin:*"]
-    }
-  ]
-}
-Result
-Secure communication between all nodes
-Controlled access using tags
-SSH without manual key setup
+```bash
+ssh alindanger@<local-vm-ip>
+```
 
+Repeat this for:
 
-Tailscale successfully connects isolated simulated locations and provides a secure foundation for the backup system.
+```bash
+ssh alindanger@<adminserver-local-ip>
+ssh alindanger@<parents-local-ip>
+ssh alindanger@<inlaws-local-ip>
+```
 
-This creates a practical pattern for a real-world deployment where each VM could be replaced by a physical server or NAS at a remote location.
+Once Tailscale SSH is enabled, local SSH will no longer be required for normal administration.
+
+---
+
+## Step 2 — Create a Reusable Auth Key
+
+In the Tailscale Admin Console:
+
+1. Go to the Tailscale Admin Console
+2. Open **Settings**
+3. Go to **Keys**
+4. Create a new **auth key**
+5. Use a **reusable auth key**
+6. Copy the generated install/auth command
+
+This project uses reusable keys for lab simplicity.
+
+> In a production environment, one-time keys or pre-approved tagged keys may be preferred depending on security requirements.
+
+---
+
+## Step 3 — Install Tailscale on Each Server
+
+Run the Tailscale install command on each Ubuntu server:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+```
+
+Repeat on:
+
+* `adminserver`
+* `parents`
+* `inlaws`
+
+---
+
+## Step 4 — Join Each Server to the Tailnet
+
+After installation, authenticate each server using the reusable auth key.
+
+Example:
+
+```bash
+sudo tailscale up --auth-key <your-auth-key>
+```
+
+Repeat this command on each server.
+
+After the command completes, the server should appear in the Tailscale Admin Console.
+
+---
+
+## Step 5 — Enable Tailscale SSH
+
+After each server is joined to the tailnet, enable Tailscale SSH.
+
+Run this on each server:
+
+```bash
+sudo tailscale up --ssh
+```
+
+This allows SSH access to be controlled by the tailnet ACL instead of relying only on local network rules.
+
+---
+
+## Step 6 — Verify Tailscale Status
+
+On each server, confirm that Tailscale is running:
+
+```bash
+tailscale status
+```
+
+You should see the other tailnet devices listed.
+
+You can also check the server's Tailscale IP:
+
+```bash
+tailscale ip -4
+```
+
+The IP should be in the `100.x.x.x` Tailscale range.
+
+---
+
+## Step 7 — Manually Apply Device Tags
+
+In the Tailscale Admin Console, manually assign the correct tag to each device.
+
+| Device             | Tag                  |
+| ------------------ | -------------------- |
+| `adminserver`      | `tag:admin`          |
+| `parents`          | `tag:parents-backup` |
+| `inlaws`           | `tag:inlaws-backup`  |
+| `Morgan's MacBook` | `tag:parents-client` |
+
+Tagging is important because access control will be based on device role instead of only device name or IP address.
+
+---
+
+## Step 8 — Invite End Users
+
+End-user devices are invited into the tailnet.
+
+For this lab:
+
+* One test user signs in with Google
+* The admin account signs in with Microsoft
+* `Morgan's MacBook` is used as the test parents client device
+
+After the MacBook joins the tailnet, it is manually tagged as:
+
+```text
+tag:parents-client
+```
+
+This allows the ACL policy to grant it access only to the correct backup server.
+
+---
+
+## Step 9 — Test Tailnet Connectivity
+
+From one server, ping another server using its Tailscale IP:
+
+```bash
+ping <tailscale-ip>
+```
+
+Example:
+
+```bash
+ping 100.x.x.x
+```
+
+You can also test by device name:
+
+```bash
+ping parents
+ping inlaws
+ping adminserver
+```
+
+Device names are especially useful when using Tailscale SSH.
+
+---
+
+## Step 10 — Test Tailscale SSH
+
+From an admin device, test SSH access using the Tailscale device name:
+
+```bash
+ssh alindanger@parents
+```
+
+```bash
+ssh alindanger@inlaws
+```
+
+```bash
+ssh alindanger@adminserver
+```
+
+You can also test the backup service user:
+
+```bash
+ssh backupuser@parents
+ssh backupuser@inlaws
+ssh backupuser@adminserver
+```
+
+Access will depend on the ACL rules configured in the next step.
+
+---
+
+## Step 11 — Confirm Expected Behavior
+
+At this stage:
+
+* All servers should be visible in the Tailscale Admin Console
+* Each server should have a Tailscale IP
+* Tailscale SSH should be enabled
+* Device tags should be applied manually
+* Admin SSH access should work over the tailnet
+* End-user devices should be joined and tagged appropriately
+
+---
+
+## Tailnet Placeholder
+
+This documentation uses a placeholder for the tailnet name:
+
+```text
+<your-tailnet-name>
+```
+
+Example MagicDNS names may look like:
+
+```text
+adminserver.<your-tailnet-name>.ts.net
+parents.<your-tailnet-name>.ts.net
+inlaws.<your-tailnet-name>.ts.net
+```
+
+In this lab, most testing uses Tailscale IPs, while SSH commonly uses device names such as:
+
+```text
+parents
+inlaws
+adminserver
+```
+
+---
+
+## Design Decision
+
+The servers are not connected using traditional VPN tunnels, port forwarding, or firewall rules.
+
+Instead, every device joins the same private tailnet and access is controlled through:
+
+* Tailscale identity
+* Device tags
+* User groups
+* ACL grants
+* Tailscale SSH rules
+
+This makes the environment portable and realistic. The same configuration works whether the devices are local VMs or physically located at different homes.
+
+---
+
+## Next Step
+
+Continue to:
+
+➡️ `05-tailscale-acl.md`
+
+The next document defines the groups, tag ownership, grants, and SSH rules that control access between devices.
