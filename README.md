@@ -1,192 +1,90 @@
-Good catch—this structure is much cleaner and more aligned with how they’ll review it.
+# Tailscale Secure Backup Lab
 
-Here’s your **updated, polished README.md** with the correct file structure and flow:
+## Overview
 
----
+This project demonstrates a secure, real-world backup architecture using Tailscale to connect multiple remote environments without requiring VPNs, port forwarding, or complex firewall configurations.
 
-# 🛰️ Tailscale Secure Backup Lab
-
-## 📌 Project Title
-
-**Secure Multi-Site Backup System Using Tailscale**
+Each location maintains its own local backups while securely replicating data to a centralized off-site server for disaster recovery.
 
 ---
 
-## 🧾 Short Summary
+## Problem
 
-This project demonstrates how to build a secure, multi-location backup system using Tailscale without exposing any services to the public internet.
+Managing backups across multiple remote locations typically requires:
 
-Separate environments (Admin, Parents, In-Laws) are simulated using Proxmox virtual machines. Each location performs local backups while securely replicating data to a central off-site server over a private tailnet.
+- VPN configuration
+- Public IP addresses
+- Firewall rules
+- Complex networking
 
----
-
-## ❗ What Problem This Solves
-
-Traditional multi-site backups require:
-
-* Port forwarding
-* Public IP exposure
-* Complex VPN/firewall configurations
-
-This project removes those requirements by:
-
-* Using Tailscale for secure, identity-based networking
-* Keeping all services private inside the tailnet
-* Enabling both **local recovery** and **off-site disaster recovery**
+This project eliminates those requirements by using Tailscale as a private network layer.
 
 ---
 
-## 🔑 Key Features
+## Solution
 
-### 🔐 Secure Connectivity (Tailscale)
-
-* Encrypted peer-to-peer mesh network
-* Identity-based access control (tags + ACLs)
-* Works across NAT and firewalls automatically
-
-### 🚫 No Port Forwarding
-
-* No open inbound ports
-* No firewall rule complexity
-* All traffic stays inside the tailnet
-
-### 💾 Local + Off-Site Backups
-
-* Local backups for fast restore times
-* Off-site replication for disaster recovery
-* Fully automated using scripts and cron jobs
-
-### 🖥️ Tailscale SSH
-
-* SSH access without exposing port 22
-* Controlled via Tailscale ACL policies
-* Secure admin access to all servers
+- Each site has a **local backup server**
+- Clients back up locally (fast, reliable restores)
+- Backup servers replicate data **securely over the Tailnet**
+- A central **admin server** stores off-site copies
 
 ---
 
-## 🏗️ High-Level Architecture Summary
+## Key Features
 
-This lab simulates three isolated environments:
-
-* **Admin Network**
-
-  * Central server for management and off-site backups
-
-* **Parents Network**
-
-  * Local backup server
-  * Receives backups from client devices
-  * Replicates data to admin server
-
-* **In-Laws Network**
-
-  * Same structure as parents network
-
-All systems communicate exclusively through the **Tailscale tailnet**, allowing:
-
-* Secure communication between isolated networks
-* Backup replication without public exposure
-* Centralized off-site storage
+- 🔒 Secure private networking (Tailscale)
+- 🚫 No port forwarding or firewall changes
+- 💾 Local + off-site backup strategy
+- 🔑 Tailscale SSH (no key management)
+- 🧠 Simple, scalable architecture
 
 ---
 
-## 📂 Project Structure (Follow in Order)
+## Architecture
 
-### Core Documentation
-
-1. [`01-project-overview.md`](./01-project-overview.md)
-   Goals, scope, and design decisions
-
-2. [`02-environment-setup.md`](./02-environment-setup.md)
-   Proxmox setup, VM creation, and storage configuration
-
-3. [`03-architecture.md`](./03-architecture.md)
-   Logical architecture and system layout
-
-4. [`04-tailscale-setup.md`](./04-tailscale-setup.md)
-   Tailscale installation, tagging, ACLs, and SSH setup
-
-5. [`05-parents-backup-setup.md`](./05-parents-backup-setup.md)
-   Local backup + replication setup for Parents server
-
-6. [`06-inlaws-backup-setup.md`](./06-inlaws-backup-setup.md)
-   Local backup + replication setup for In-Laws server
-
-7. [`07-demo-script.md`](./07-demo-script.md)
-   Step-by-step demo walkthrough
+See:
+- `architecture/overview.md`
+- `architecture/diagram.md`
 
 ---
 
-### Supporting Files
+## Setup Guide
 
-#### 📊 Diagrams
+Follow in order:
 
-* [`diagrams/architecture.md`](./diagrams/architecture.md)
-  Visual representation of the system
-
-#### ⚙️ Scripts
-
-* [`scripts/install-tailscale.sh`](./scripts/install-tailscale.sh)
-  Automates Tailscale installation
-
-* [`scripts/backup.sh`](./scripts/backup.sh)
-  Handles rsync-based replication
-
-* [`scripts/test-rsync.sh`](./scripts/test-rsync.sh)
-  Validates backup connectivity and replication
+1. `setup/environment.md`
+2. `setup/tailscale.md`
+3. `setup/parents-backup.md`
+4. `setup/inlaws-backup.md`
 
 ---
 
-## 🔄 Backup Workflow (Core Concept)
+## Demo
 
-This system uses a **two-stage backup strategy**:
-
-### 1️⃣ Local Backup
-
-* Devices back up to their **local server**
-* Fast restore speeds
-* No internet dependency
-
-### 2️⃣ Off-Site Replication
-
-* Local backup servers replicate to the **admin server**
-* Uses `rsync` over Tailscale
-* Runs via scheduled cron jobs
-
-```
-Client → Local Backup Server → Admin Server
-```
+See:
+- `demo/demo-script.md`
 
 ---
 
-## ✅ Result
+## How It Works (Quick Summary)
 
-* Fast local restores
-* Off-site disaster recovery
-* Zero public exposure
-* Minimal network complexity
-
----
-
-## 🚀 Why This Project Matters
-
-This project demonstrates a real-world use case for Tailscale:
-
-* Secure infrastructure without traditional VPN complexity
-* Practical backup solution for families or small organizations
-* Clean, scalable architecture using modern networking principles
+1. Macs back up to their **local server**
+2. Backup servers store data locally
+3. Backup servers replicate data to **adminserver** using `rsync` over Tailscale
+4. Adminserver acts as the **off-site backup destination**
 
 ---
 
-## 📬 Tailnet Info
+## Technologies Used
 
-*(Add your tailnet name here before submission)*
+- Tailscale
+- Ubuntu Server
+- Proxmox (lab environment)
+- rsync
+- cron
 
 ---
 
-If you want to take this one step further (and impress them more), next move would be:
+## Outcome
 
-👉 Add a **“Design Decisions” section** (why rsync, why this architecture)
-👉 Or tighten language to match **Tailscale marketing tone** (they love that in SE interviews)
-
-Just say the word 👍
+A secure, low-maintenance backup system that works across multiple locations without traditional networking complexity.
